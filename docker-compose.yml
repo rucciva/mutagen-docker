@@ -1,0 +1,33 @@
+version: "2.4"
+services:
+  mutagen:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - mutagen:/home/mutagen/.mutagen
+      - ./ssh:/home/mutagen/.ssh
+    healthcheck:
+      test: ["CMD", "mutagen", "forward", "list"]
+      start_period: 10s
+    ports:
+      - 8080:8080
+    
+  mutagen_init:
+    build: .
+    depends_on:
+      mutagen:
+        condition: service_healthy
+    network_mode: service:mutagen
+    restart: on-failure
+    volumes:
+      - mutagen:/home/mutagen/.mutagen
+      - ./mutagen:/home/mutagen/mutagen
+    working_dir: /home/mutagen/mutagen
+    entrypoint: /bin/sh -c 
+    command: 
+      - mutagen project terminate ;
+        mutagen project start
+
+volumes:
+  mutagen:
+  
